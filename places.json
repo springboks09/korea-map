@@ -1,7 +1,8 @@
 [
   {
     "id": "seoul-bagelland-hongdae",
-    "name": "Bagel Land 베이글랜드 (Hongdae)",
+    "name": "Bagel Land 베이글랜드",
+    "naver": "베이글랜드 홍대",
     "cat": "cafe",
     "city": "seoul",
     "area": "Hongdae",
@@ -15,6 +16,7 @@
   {
     "id": "seoul-kimbuksun-garosugil",
     "name": "Kim Buksun Keunnambi 김북순 큰남비집",
+    "naver": "김북순 큰남비집",
     "cat": "food",
     "city": "seoul",
     "area": "Garosugil",

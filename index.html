@@ -383,10 +383,14 @@ function dist(a,b){const R=6371000,r=Math.PI/180;
 function fmtDist(m){return m<1000?Math.round(m)+" m":(m/1000).toFixed(1).replace(".",",")+" km";}
 function navUrl(p,prov){
   const city=cityOf(cityOfP(p)).label;
+  if(prov==="naver"){
+    // Naver is a Korean app — search the clean Korean name (p.naver) if we have it,
+    // else strip "(...)" notes and the redundant city so the query actually matches.
+    const q = p.naver || (p.name.replace(/\s*\([^)]*\)/g,"").trim()+" "+(p.area||"")).trim();
+    return `https://map.naver.com/p/search/${encodeURIComponent(q)}`;
+  }
   const dest=p.lat!=null?`${p.lat},${p.lng}`:encodeURIComponent((p.addr||p.name)+" "+city);
-  return prov==="naver"
-    ? `https://map.naver.com/p/search/${encodeURIComponent(p.name+" "+(p.area||"")+" "+city)}`
-    : `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+  return `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
 }
 
 function cityPlaces(){ return places.filter(p=>cityOfP(p)===currentCity); }
@@ -683,17 +687,21 @@ async function pullPlaces(silent){
     if(!Array.isArray(fetched)) throw 0;
   }catch(e){ if(!silent) toast("Kunne ikke hente listen — tjek nettet"); return; }
   let seen=[]; try{ const s=await Store.get(SYNCKEY); if(s) seen=JSON.parse(s); }catch(e){}
-  const seenSet=new Set(seen), haveIds=new Set(places.map(p=>p.id));
-  let added=0;
+  const seenSet=new Set(seen);
+  let added=0, updated=0;
   fetched.forEach(p=>{
     if(!p||!p.name||!p.id) return;
     if(!p.city) p.city="seoul";
-    if(!haveIds.has(p.id) && !seenSet.has(p.id)){ places.push(p); added++; }
+    const idx=places.findIndex(x=>x.id===p.id);
+    if(idx>=0){ if(JSON.stringify(places[idx])!==JSON.stringify(p)){ places[idx]=p; updated++; } }   // refresh a curated place I corrected
+    else if(!seenSet.has(p.id)){ places.push(p); added++; }                                            // brand-new (and not one you deleted)
   });
   const allSeen=[...new Set([...seen, ...fetched.map(p=>p&&p.id).filter(Boolean)])];
   await Store.set(SYNCKEY,JSON.stringify(allSeen));
-  if(added){ save(); render(); toast(added===1?"1 nyt sted hentet":`${added} nye steder hentet`); }
-  else if(!silent){ toast("Du er helt opdateret"); }
+  if(added||updated){ save(); render(); }
+  if(added) toast(added===1?"1 nyt sted hentet":`${added} nye steder hentet`);
+  else if(updated && !silent) toast("Steder opdateret");
+  else if(!silent) toast("Du er helt opdateret");
 }
 $("fetchBtn").onclick=()=>{ $("menuPop").classList.remove("open"); pullPlaces(false); };
 
