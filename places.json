@@ -11,5 +11,18 @@
     "lat": 37.5555252,
     "lng": 126.9260107,
     "ts": 1750000000000
+  },
+  {
+    "id": "seoul-kimbuksun-garosugil",
+    "name": "Kim Buksun Keunnambi 김북순 큰남비집",
+    "cat": "food",
+    "city": "seoul",
+    "area": "Garosugil",
+    "addr": "15 Apgujeong-ro 2-gil, Gangnam-gu (Sinsa)",
+    "note": "Berømt kimchi jjigae ved Garosugil — nær Sinsa st. udgang 8.",
+    "src": "https://www.tripadvisor.com/Restaurant_Review-g294197-d9175752-Reviews-Kim_Buksun_Big_Nambi_House-Seoul.html",
+    "lat": 37.5207187,
+    "lng": 127.0199558,
+    "ts": 1750000100000
   }
 ]
