@@ -207,6 +207,7 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
     </button>
     <div class="menu-pop" id="menuPop">
+      <button id="fetchBtn">✦ Hent nye steder</button>
       <button id="copyBtn">Kopiér steder (tekst)</button>
       <button id="pasteBtn">Indsæt steder (tekst)</button>
       <button id="exportBtn">Eksportér (gem fil)</button>
@@ -358,6 +359,7 @@ async function load(){
   places.forEach(p=>{ if(!p.city) p.city="seoul"; });
   checkPersist();
   render();
+  pullPlaces(true);   // silently fetch any new curated places on open
 }
 async function save(){
   const ok=await Store.set(KEY,JSON.stringify(places));
@@ -668,6 +670,32 @@ $("fileInput").onchange=e=>{
   }catch(_){toast("Kunne ikke læse filen");}};
   r.readAsText(f);e.target.value="";
 };
+
+// Pull curated places from places.json (in the site repo) and merge in new ones.
+// Remembers every id it has ever seen, so places you delete don't come back.
+const SYNCKEY="korea_synced_ids_v1";
+async function pullPlaces(silent){
+  let fetched;
+  try{
+    const res=await fetch("places.json?ts="+Date.now(),{cache:"no-store"});
+    if(!res.ok) throw 0;
+    fetched=await res.json();
+    if(!Array.isArray(fetched)) throw 0;
+  }catch(e){ if(!silent) toast("Kunne ikke hente listen — tjek nettet"); return; }
+  let seen=[]; try{ const s=await Store.get(SYNCKEY); if(s) seen=JSON.parse(s); }catch(e){}
+  const seenSet=new Set(seen), haveIds=new Set(places.map(p=>p.id));
+  let added=0;
+  fetched.forEach(p=>{
+    if(!p||!p.name||!p.id) return;
+    if(!p.city) p.city="seoul";
+    if(!haveIds.has(p.id) && !seenSet.has(p.id)){ places.push(p); added++; }
+  });
+  const allSeen=[...new Set([...seen, ...fetched.map(p=>p&&p.id).filter(Boolean)])];
+  await Store.set(SYNCKEY,JSON.stringify(allSeen));
+  if(added){ save(); render(); toast(added===1?"1 nyt sted hentet":`${added} nye steder hentet`); }
+  else if(!silent){ toast("Du er helt opdateret"); }
+}
+$("fetchBtn").onclick=()=>{ $("menuPop").classList.remove("open"); pullPlaces(false); };
 
 let syncMode="copy";
 function openSync(mode){

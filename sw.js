@@ -1,6 +1,6 @@
 // Minimal service worker: instant loads + offline app shell.
 // Bump CACHE when you change index.html so phones pick up the new version.
-const CACHE = "korea-map-v1";
+const CACHE = "korea-map-v2";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -17,6 +17,12 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const req = e.request;
   if (req.method !== "GET") return;
+
+  // The curated places list must always be fresh — never serve it from cache.
+  if (new URL(req.url).pathname.endsWith("/places.json")) {
+    e.respondWith(fetch(req).catch(() => new Response("[]", {headers: {"Content-Type": "application/json"}})));
+    return;
+  }
 
   // Navigations / the page itself: network-first so updates aren't stuck stale.
   if (req.mode === "navigate") {
