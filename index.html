@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Korea — Dine gemte steder</title>
+<meta name="description" content="Dine gemte steder i Korea — find vej når du står midt i byen.">
+<meta name="theme-color" content="#FBF7F0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Korea">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<!-- Korea places collector: Seoul / Busan / Jeju -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/3.6.2/maplibre-gl.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/3.6.2/maplibre-gl.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --paper:#FBF7F0; --card:#FFFFFF; --ink:#211D1A; --ink-soft:#6B635B;
+    --line:#EBE3D5; --line-strong:#DDD2BF; --accent:#C8472B; --accent-ink:#9A3115;
+    --seg:#F0E7D7;
+    --shadow:0 1px 2px rgba(33,29,26,.05), 0 8px 24px rgba(33,29,26,.06);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;}
+  body{max-width:680px;margin:0 auto;padding:0 0 120px;min-height:100vh}
+  h1,h2,h3,.display{font-family:"Bricolage Grotesque","Inter",sans-serif}
+
+  header{position:sticky;top:0;z-index:20;background:var(--paper);
+    padding:18px 18px 10px;border-bottom:1px solid var(--line)}
+  .brand{font-weight:800;font-size:26px;letter-spacing:-.02em;line-height:1}
+  .brand .ko{color:var(--accent)}
+  .tagline{font-size:12.5px;color:var(--ink-soft);margin-top:4px}
+
+  .tabs{display:flex;gap:6px;margin-top:14px;background:var(--seg);padding:4px;border-radius:13px}
+  .tab{flex:1;border:0;background:transparent;padding:8px 6px;border-radius:10px;cursor:pointer;
+    font-family:"Bricolage Grotesque";font-weight:700;font-size:14px;color:var(--ink-soft);
+    display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.05}
+  .tab .tk{font-size:10px;font-weight:600;font-family:"Inter";opacity:.65}
+  .tab .tc{font-size:10px;font-weight:600;font-family:"Inter";opacity:.5}
+  .tab.active{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(33,29,26,.12)}
+
+  .searchrow{display:flex;gap:8px;margin-top:12px}
+  .search{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);
+    border:1px solid var(--line-strong);border-radius:12px;padding:10px 12px}
+  .search input{border:0;outline:0;flex:1;font-size:15px;background:transparent;color:var(--ink)}
+  .search svg{flex:none;color:var(--ink-soft)}
+  .nearbtn{flex:none;display:flex;align-items:center;gap:6px;background:var(--ink);color:#fff;
+    border:0;border-radius:12px;padding:0 14px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  .nearbtn.on{background:var(--accent)}
+  .nearbtn:active{transform:scale(.97)}
+
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:12px 18px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;display:flex;align-items:center;gap:7px;border:1px solid var(--line-strong);
+    background:var(--card);color:var(--ink);border-radius:999px;padding:7px 13px 7px 10px;
+    font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .chip .dot{width:9px;height:9px;border-radius:50%}
+  .chip.active{border-color:var(--ink);background:var(--ink);color:#fff}
+  .chip .ct{opacity:.55;font-weight:500;font-variant-numeric:tabular-nums}
+
+  .subbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 18px 4px}
+  .areasel{flex:1;font-family:inherit;font-size:13.5px;color:var(--ink);
+    border:1px solid var(--line-strong);background:var(--card);border-radius:10px;padding:9px 10px}
+  .vtog{flex:none;display:flex;gap:3px;background:var(--seg);padding:3px;border-radius:10px}
+  .vbtn{border:0;background:transparent;padding:7px 12px;border-radius:8px;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:600;color:var(--ink-soft)}
+  .vbtn.sel{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(33,29,26,.12)}
+  #mapWrap{display:none;padding:10px 14px 0}
+  #map{height:62vh;min-height:340px;border-radius:var(--radius);border:1px solid var(--line);
+    box-shadow:var(--shadow);background:#e9e4d8;z-index:1}
+  .mapnote{font-size:12.5px;color:var(--ink-soft);line-height:1.45;padding:10px 4px 0;text-align:center}
+  .pwarn{display:none;margin:10px 18px 0;background:#FBE7E2;border:1px solid #E7C4B8;color:#8a3b22;
+    font-size:12.5px;line-height:1.5;padding:11px 13px;border-radius:11px}
+  .pwarn b{font-weight:700}
+  .pin{width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45)}
+  .maplibregl-popup-content{font-family:"Inter",sans-serif;font-size:13.5px;line-height:1.5;
+    padding:11px 14px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.18)}
+  .maplibregl-popup-content b{font-family:"Bricolage Grotesque";font-size:15px}
+  .maplibregl-popup-content a{color:var(--accent);font-weight:600;text-decoration:none}
+  .leaflet-popup-content{font-family:"Inter",sans-serif;font-size:13.5px;line-height:1.5;margin:11px 13px}
+  .leaflet-popup-content b{font-family:"Bricolage Grotesque";font-size:15px}
+  .leaflet-popup-content a{color:var(--accent);font-weight:600;text-decoration:none}
+  .menu{position:relative}
+  .iconbtn{border:1px solid var(--line-strong);background:var(--card);border-radius:10px;
+    width:38px;height:38px;display:grid;place-items:center;cursor:pointer;color:var(--ink-soft)}
+  .menu-pop{position:absolute;right:0;top:44px;background:var(--card);border:1px solid var(--line-strong);
+    border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:none;min-width:190px;z-index:30}
+  .menu-pop.open{display:block}
+  .menu-pop button{display:block;width:100%;text-align:left;border:0;background:transparent;
+    padding:12px 14px;font-size:14px;font-family:inherit;color:var(--ink);cursor:pointer}
+  .menu-pop button:hover{background:var(--paper)}
+
+  main{padding:8px 14px 0}
+  .place{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:14px 14px 12px;margin:10px 4px;position:relative}
+  .ptop{display:flex;gap:11px;align-items:flex-start}
+  .stamp{flex:none;width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+    color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.25)}
+  .stamp svg{width:21px;height:21px}
+  .pname{font-family:"Bricolage Grotesque";font-weight:700;font-size:18px;letter-spacing:-.01em;line-height:1.2}
+  .pmeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:3px;font-size:12.5px;color:var(--ink-soft)}
+  .pmeta .cat{font-weight:600}
+  .pmeta .area{display:inline-flex;align-items:center;gap:3px}
+  .dist{margin-left:auto;flex:none;font-size:12px;font-weight:700;color:var(--accent-ink);
+    font-variant-numeric:tabular-nums;background:#F6E7E1;padding:3px 8px;border-radius:999px}
+  .note{font-size:14px;color:#3c352f;line-height:1.45;margin:10px 2px 0}
+  .src{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink-soft);margin:9px 2px 0;text-decoration:none}
+  .src:hover{color:var(--accent)}
+  .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .go{flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:7px;
+    border:0;border-radius:11px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none}
+  .go.g{background:var(--ink);color:#fff}
+  .go.n{background:#F0E7D7;color:var(--ink)}
+  .go:active{transform:scale(.98)}
+  .editrow{display:flex;gap:6px;position:absolute;top:12px;right:12px}
+  .editrow button{border:0;background:transparent;color:var(--line-strong);cursor:pointer;padding:4px;border-radius:8px}
+  .editrow button:hover{color:var(--ink-soft);background:var(--paper)}
+
+  .empty,.loading{text-align:center;padding:54px 30px;color:var(--ink-soft)}
+  .empty h2{font-size:20px;color:var(--ink);margin-bottom:8px}
+  .empty p{font-size:14px;line-height:1.5;max-width:330px;margin:0 auto}
+
+  .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:40;
+    background:var(--accent);color:#fff;border:0;border-radius:999px;padding:15px 24px;font-size:15px;
+    font-weight:700;font-family:"Bricolage Grotesque";box-shadow:0 8px 28px rgba(200,71,43,.4);
+    cursor:pointer;display:flex;align-items:center;gap:8px}
+  .fab:active{transform:translateX(-50%) scale(.96)}
+  .overlay{position:fixed;inset:0;background:rgba(33,29,26,.42);z-index:50;display:none}
+  .overlay.open{display:block}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--paper);
+    border-radius:22px 22px 0 0;max-width:680px;margin:0 auto;padding:20px 18px 26px;
+    transform:translateY(100%);transition:transform .28s cubic-bezier(.3,.8,.3,1);max-height:92vh;overflow-y:auto}
+  .sheet.open{transform:translateY(0)}
+  .grip{width:40px;height:4px;background:var(--line-strong);border-radius:99px;margin:0 auto 14px}
+  .sheet h2{font-size:21px;margin-bottom:4px}
+  .sheet .hint{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);
+    margin:14px 2px 6px;text-transform:uppercase;letter-spacing:.03em}
+  input[type=text],textarea,select.field{width:100%;font-family:inherit;font-size:15px;color:var(--ink);
+    background:var(--card);border:1px solid var(--line-strong);border-radius:11px;padding:12px}
+  textarea{resize:vertical;min-height:60px}
+  .seg{display:flex;gap:6px;background:var(--seg);padding:4px;border-radius:12px}
+  .segbtn{flex:1;border:0;background:transparent;padding:11px 6px;border-radius:9px;cursor:pointer;
+    font-family:"Bricolage Grotesque";font-weight:700;font-size:14px;color:var(--ink-soft)}
+  .segbtn.sel{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(33,29,26,.12)}
+  .catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .catopt{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;
+    border:1.5px solid var(--line-strong);background:var(--card);border-radius:12px;cursor:pointer;
+    font-size:11px;font-weight:600;color:var(--ink-soft);text-align:center;line-height:1.1}
+  .catopt .ci{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff}
+  .catopt .ci svg{width:17px;height:17px}
+  .catopt.sel{border-color:var(--ink);color:var(--ink)}
+  .savebtn{width:100%;margin-top:22px;background:var(--accent);color:#fff;border:0;border-radius:13px;
+    padding:15px;font-size:16px;font-weight:700;font-family:"Bricolage Grotesque";cursor:pointer}
+  .savebtn:active{transform:scale(.99)}
+  .cancelbtn{width:100%;margin-top:8px;background:transparent;color:var(--ink-soft);border:0;
+    padding:10px;font-size:14px;font-family:inherit;cursor:pointer}
+
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13.5px;font-weight:500;
+    z-index:80;opacity:0;transition:.25s;pointer-events:none;max-width:88%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+  @media(min-width:520px){.catgrid{grid-template-columns:repeat(8,1fr)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand" id="brand">Korea</div>
+  <div class="tagline">Dine gemte steder — find vej når du står midt i byen</div>
+  <div class="tabs" id="tabs"></div>
+  <div class="searchrow">
+    <div class="search">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="q" type="text" placeholder="Søg navn, område, ret…" autocomplete="off">
+    </div>
+    <button class="nearbtn" id="nearBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-5.5 8-12a8 8 0 1 0-16 0c0 6.5 8 12 8 12Z"/><circle cx="12" cy="10" r="3"/></svg>
+      I nærheden
+    </button>
+  </div>
+</header>
+
+<div class="chips" id="chips"></div>
+
+<div class="subbar">
+  <div class="vtog" id="viewTog">
+    <button class="vbtn sel" data-v="list">Liste</button>
+    <button class="vbtn" data-v="map">Kort</button>
+  </div>
+  <select class="areasel" id="areaSel"><option value="all">Alle områder</option></select>
+  <div class="menu">
+    <button class="iconbtn" id="menuBtn" aria-label="Mere">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+    </button>
+    <div class="menu-pop" id="menuPop">
+      <button id="copyBtn">Kopiér steder (tekst)</button>
+      <button id="pasteBtn">Indsæt steder (tekst)</button>
+      <button id="exportBtn">Eksportér (gem fil)</button>
+      <button id="importBtn">Importér fra fil</button>
+    </div>
+  </div>
+</div>
+
+<div class="pwarn" id="persistWarn"><b>Denne enhed gemmer ikke automatisk her.</b> Brug menuen (⋯) → <b>Eksportér</b> for at gemme en kopi af dine steder, så du ikke mister dem.</div>
+
+<main id="list"><div class="loading">Henter dine steder…</div></main>
+<div id="mapWrap"><div id="map"></div><div class="mapnote" id="mapNote"></div></div>
+
+<button class="fab" id="fab">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+  Tilføj sted
+</button>
+
+<input type="file" id="fileInput" accept="application/json" hidden>
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet">
+  <div class="grip"></div>
+  <h2 id="sheetTitle">Tilføj et sted</h2>
+  <p class="hint">Set noget godt på et opslag? Smid det ind her.</p>
+
+  <label>By</label>
+  <div class="seg" id="citySeg"></div>
+
+  <label>Navn på stedet</label>
+  <input type="text" id="fName" placeholder="fx Mapo Galmaegi">
+
+  <label>Type</label>
+  <div class="catgrid" id="catGrid"></div>
+
+  <label>Område</label>
+  <input type="text" id="fArea" list="areaList" placeholder="fx Haeundae, Aewol, Hongdae…">
+  <datalist id="areaList"></datalist>
+
+  <label>Adresse</label>
+  <input type="text" id="fAddr" placeholder="Adresse, eller bare områdets navn">
+
+  <label>Google Maps-link eller koordinater <span style="text-transform:none;font-weight:400">(valgfri — giver afstand)</span></label>
+  <input type="text" id="fLink" placeholder="Indsæt Maps-link, eller 35.16, 129.16">
+
+  <label>Note <span style="text-transform:none;font-weight:400">(valgfri)</span></label>
+  <textarea id="fNote" placeholder="Hvad anbefalede de? Hvad skal man bestille?"></textarea>
+
+  <label>Link til opslaget <span style="text-transform:none;font-weight:400">(valgfri)</span></label>
+  <input type="text" id="fSrc" placeholder="Link til Instagram / TikTok / blog">
+
+  <button class="savebtn" id="saveBtn">Gem sted</button>
+  <button class="cancelbtn" id="cancelBtn">Annullér</button>
+</div>
+
+<div class="overlay" id="overlay2"></div>
+<div class="sheet" id="syncSheet">
+  <div class="grip"></div>
+  <h2 id="syncTitle">Kopiér dine steder</h2>
+  <p class="hint" id="syncHint"></p>
+  <textarea id="syncText" style="min-height:150px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.4"></textarea>
+  <button class="savebtn" id="syncAction">Kopiér</button>
+  <button class="cancelbtn" id="syncClose">Luk</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY="seoul_places_v1", CITYKEY="korea_city_v1";
+
+const ICONS={
+  food:'<path d="M4 3v8a3 3 0 0 0 3 3v7M7 3v6M4 6h3M17 3c-1.5 0-2.5 2-2.5 5s1 4 2.5 4v9"/>',
+  cafe:'<path d="M4 8h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8Z"/><path d="M17 9h2a2 2 0 0 1 0 5h-1"/><path d="M7 2v2M11 2v2"/>',
+  dessert:'<path d="M7 11a5 5 0 0 1 10 0"/><path d="M5 11h14l-2 9H7l-2-9Z"/>',
+  bar:'<path d="M5 4h14l-7 8v6M9 18h6"/>',
+  street:'<circle cx="12" cy="8" r="2"/><circle cx="12" cy="13" r="2"/><path d="M12 15v7M12 2v1"/>',
+  shop:'<path d="M5 8h14l-1 12H6L5 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+  sight:'<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',
+  other:'<path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17l-5.5 4L8 13.5 3 9l6.5-.5L12 2Z"/>'
+};
+const CATS=[
+  {key:"food",   label:"Spisested",   color:"#C8472B"},
+  {key:"cafe",   label:"Café",        color:"#8A5A2B"},
+  {key:"dessert",label:"Dessert",     color:"#C77FA8"},
+  {key:"bar",    label:"Bar",         color:"#4E6E58"},
+  {key:"street", label:"Street food", color:"#E0913A"},
+  {key:"shop",   label:"Shopping",    color:"#3E6E8E"},
+  {key:"sight",  label:"Seværdighed", color:"#6A5AA0"},
+  {key:"other",  label:"Andet",       color:"#6B6B6B"},
+];
+const catOf=k=>CATS.find(c=>c.key===k)||CATS[7];
+
+const CITIES=[
+  {key:"seoul",    label:"Seoul",    ko:"서울"},
+  {key:"busan",    label:"Busan",    ko:"부산"},
+  {key:"jeju",     label:"Jeju",     ko:"제주"},
+  {key:"gyeongju", label:"Gyeongju", ko:"경주"},
+];
+const cityOf=k=>CITIES.find(c=>c.key===k)||CITIES[0];
+const AREAS={
+  seoul:["Hongdae","Yeonnam","Mangwon","Seongsu","Gangnam","Apgujeong","Garosugil","Myeongdong",
+    "Insadong","Bukchon","Ikseon-dong","Euljiro","Jongno","Itaewon","Hannam","Gwangjang Market",
+    "Dongdaemun","Jamsil","Yongsan","Yeouido","Sinsa","Hapjeong"],
+  busan:["Haeundae","Gwangalli","Seomyeon","Nampo-dong","Jagalchi","Gamcheon Culture Village","Songjeong",
+    "Centum City","Gwangbok-dong","Busan Station / Choryang","Millak","Dalmaji","Taejongdae","Songdo",
+    "Jeonpo Cafe Street","Gijang"],
+  jeju:["Jeju City","Seogwipo","Aewol","Hyeopjae","Jungmun","Seongsan / Ilchulbong","Hamdeok","Udo",
+    "Seopjikoji","Hallim","Gujwa","Jocheon","Pyoseon","Dongmun Market","Jungang (Jeju City)","Sehwa"],
+  gyeongju:["Hwangnidan-gil","Bulguksa","Seokguram","Daereungwon (kongegrave)","Cheomseongdae",
+    "Donggung & Wolji","Gyochon Village","Bomun Lake","Seongdong Market","Woljeonggyo Bridge",
+    "Yangdong Folk Village","Bunhwangsa","Gyeongju Station / centrum","Oreung"]
+};
+const CENTER={
+  seoul:[37.5665,126.9780], busan:[35.1796,129.0756],
+  jeju:[33.4996,126.5312], gyeongju:[35.8562,129.2247]
+};
+
+let places=[], userPos=null, editingId=null;
+let currentCity="seoul", selCity="seoul";
+let filterCat="all", filterArea="all", query="", selCat="food";
+let view="list", map=null, markers=[], mapReady=false, engine=null;
+
+const $=id=>document.getElementById(id);
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600);}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+const cityOfP=p=>p.city||"seoul";
+
+// Storage: plain localStorage. On a real hosted https site this persists permanently —
+// the chat sandbox's window.storage path was the only reason saving failed before.
+const Store={
+  async get(key){
+    try{ const v=localStorage.getItem(key); if(v!=null) return v; }catch(e){}
+    return null;
+  },
+  async set(key,val){
+    try{ localStorage.setItem(key,val); return true; }catch(e){ return false; }
+  }
+};
+async function checkPersist(){
+  try{ await Store.set("__persist_test","1"); const v=await Store.get("__persist_test");
+    if(v!=="1") $("persistWarn").style.display="block"; }
+  catch(e){ $("persistWarn").style.display="block"; }
+}
+async function load(){
+  const raw=await Store.get(KEY);
+  try{ places=raw?JSON.parse(raw):[]; }catch(e){ places=[]; }
+  const c=await Store.get(CITYKEY); if(c&&AREAS[c]) currentCity=c;
+  places.forEach(p=>{ if(!p.city) p.city="seoul"; });
+  checkPersist();
+  render();
+}
+async function save(){
+  const ok=await Store.set(KEY,JSON.stringify(places));
+  if(!ok){ $("persistWarn").style.display="block"; toast("Kunne ikke gemme automatisk — brug Eksportér"); }
+}
+async function saveCity(){ Store.set(CITYKEY,currentCity); }
+
+function parseCoords(s){
+  if(!s) return null; s=s.trim();
+  let m=s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(!m) m=s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if(!m) m=s.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(!m) m=s.match(/^\s*(-?\d{1,2}\.\d+)\s*,\s*(-?\d{2,3}\.\d+)\s*$/);
+  if(!m) return null;
+  return {lat:+m[1],lng:+m[2]};
+}
+function dist(a,b){const R=6371000,r=Math.PI/180;
+  const dLa=(b.lat-a.lat)*r,dLo=(b.lng-a.lng)*r;
+  const x=Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));}
+function fmtDist(m){return m<1000?Math.round(m)+" m":(m/1000).toFixed(1).replace(".",",")+" km";}
+function navUrl(p,prov){
+  const city=cityOf(cityOfP(p)).label;
+  const dest=p.lat!=null?`${p.lat},${p.lng}`:encodeURIComponent((p.addr||p.name)+" "+city);
+  return prov==="naver"
+    ? `https://map.naver.com/p/search/${encodeURIComponent(p.name+" "+(p.area||"")+" "+city)}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+}
+
+function cityPlaces(){ return places.filter(p=>cityOfP(p)===currentCity); }
+function areasInUse(){ return [...new Set(cityPlaces().map(p=>p.area).filter(Boolean))].sort(); }
+
+function renderTabs(){
+  const counts={}; places.forEach(p=>counts[cityOfP(p)]=(counts[cityOfP(p)]||0)+1);
+  $("tabs").innerHTML=CITIES.map(c=>`<button class="tab ${currentCity===c.key?"active":""}" data-city="${c.key}">
+    <span>${c.label}</span><span class="tk">${c.ko}</span>
+    <span class="tc">${counts[c.key]||0} steder</span></button>`).join("");
+  $("tabs").querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+    currentCity=b.dataset.city; filterArea="all"; saveCity(); render();});
+  $("brand").innerHTML=`${cityOf(currentCity).label} <span class="ko">${cityOf(currentCity).ko}</span>`;
+}
+function renderChips(){
+  const cp=cityPlaces(), counts={}; cp.forEach(p=>counts[p.cat]=(counts[p.cat]||0)+1);
+  let h=`<button class="chip ${filterCat==="all"?"active":""}" data-c="all">Alle <span class="ct">${cp.length}</span></button>`;
+  CATS.forEach(c=>{ if(!counts[c.key])return;
+    h+=`<button class="chip ${filterCat===c.key?"active":""}" data-c="${c.key}">
+      <span class="dot" style="background:${c.color}"></span>${c.label}<span class="ct">${counts[c.key]}</span></button>`;});
+  $("chips").innerHTML=h;
+  $("chips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{filterCat=b.dataset.c;render();});
+}
+function renderAreaSelect(){
+  const used=areasInUse();
+  $("areaSel").innerHTML=`<option value="all">Alle områder</option>`+
+    used.map(a=>`<option value="${esc(a)}" ${filterArea===a?"selected":""}>${esc(a)}</option>`).join("");
+}
+function renderDatalist(){
+  const all=[...new Set([...(AREAS[selCity]||[]), ...cityPlaces().map(p=>p.area).filter(Boolean)])];
+  $("areaList").innerHTML=all.map(a=>`<option value="${esc(a)}">`).join("");
+}
+
+function render(){
+  renderTabs(); renderChips(); renderAreaSelect();
+  let items=places.filter(p=>{
+    if(cityOfP(p)!==currentCity)return false;
+    if(filterCat!=="all"&&p.cat!==filterCat)return false;
+    if(filterArea!=="all"&&p.area!==filterArea)return false;
+    if(query){const t=(p.name+" "+(p.area||"")+" "+(p.note||"")+" "+(p.addr||"")).toLowerCase();
+      if(!t.includes(query))return false;}
+    return true;
+  });
+  if(userPos){ items.forEach(p=> p._d=p.lat!=null?dist(userPos,{lat:p.lat,lng:p.lng}):Infinity);
+    items.sort((a,b)=>a._d-b._d);
+  } else { items.sort((a,b)=>(b.ts||0)-(a.ts||0)); }
+
+  applyView();
+  if(view==="map"){ renderMap(items); return; }
+
+  const m=$("list"), cl=cityOf(currentCity).label;
+  if(!cityPlaces().length){
+    m.innerHTML=`<div class="empty"><h2>Ingen steder i ${cl} endnu</h2>
+      <p>Tryk <b>Tilføj sted</b> og smid den første anbefaling ind. Indsæt gerne et Google Maps-link, så regner appen afstand ud, når du er på farten.</p></div>`;
+    return;
+  }
+  if(!items.length){ m.innerHTML=`<div class="empty"><h2>Ingen match</h2><p>Prøv at rydde søgningen eller filtrene.</p></div>`; return; }
+
+  m.innerHTML=items.map(p=>{
+    const c=catOf(p.cat);
+    const d=(userPos&&p._d!==Infinity)?`<span class="dist">${fmtDist(p._d)}</span>`:"";
+    const note=p.note?`<div class="note">${esc(p.note)}</div>`:"";
+    const src=p.src?`<a class="src" href="${esc(p.src)}" target="_blank" rel="noopener">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+      Se opslaget</a>`:"";
+    const addr=p.addr?`<div class="pmeta"><span style="color:var(--ink-soft)">${esc(p.addr)}</span></div>`:"";
+    return `<div class="place">
+      <div class="editrow">
+        <button data-edit="${p.id}" aria-label="Redigér"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></button>
+        <button data-del="${p.id}" aria-label="Slet"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+      </div>
+      <div class="ptop">
+        <div class="stamp" style="background:${c.color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</svg></div>
+        <div style="flex:1;min-width:0">
+          <div class="pname">${esc(p.name)}</div>
+          <div class="pmeta">
+            <span class="cat" style="color:${c.color}">${c.label}</span>
+            ${p.area?`<span style="opacity:.4">·</span><span class="area">${esc(p.area)}</span>`:""}
+            ${d}
+          </div>
+        </div>
+      </div>
+      ${addr}${note}${src}
+      <div class="actions">
+        <a class="go g" href="${navUrl(p,"google")}" target="_blank" rel="noopener">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-5.5 8-12a8 8 0 1 0-16 0c0 6.5 8 12 8 12Z"/><circle cx="12" cy="10" r="3"/></svg>
+          Google Maps</a>
+        <a class="go n" href="${navUrl(p,"naver")}" target="_blank" rel="noopener">Naver / lokalt kort</a>
+      </div>
+    </div>`;
+  }).join("");
+  m.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openSheet(b.dataset.edit));
+  m.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    if(confirm("Slet dette sted?")){places=places.filter(x=>x.id!==b.dataset.del);save();render();}});
+}
+
+function applyView(){
+  $("list").style.display = view==="map" ? "none" : "block";
+  $("mapWrap").style.display = view==="map" ? "block" : "none";
+}
+function latinizeLabels(){
+  let layers=[];
+  try{ layers=map.getStyle().layers||[]; }catch(e){ return; }
+  layers.forEach(l=>{
+    if(l.type==='symbol' && l.layout && l.layout['text-field']!=null){
+      try{ map.setLayoutProperty(l.id,'text-field',
+        ['coalesce',['get','name:latin'],['get','name:en'],['get','name_int'],['get','name']]); }catch(e){}
+    }
+  });
+}
+function mapNoteText(items,withCo){
+  const noCo=items.length-withCo;
+  return withCo
+    ? (noCo? `${noCo} ${noCo>1?"steder":"sted"} uden placering vises ikke — tilføj et Maps-link for at få dem med.` : "")
+    : "Ingen steder her har en placering endnu. Tilføj et Google Maps-link på et sted, så dukker det op på kortet.";
+}
+function popupHTML(p,c){
+  return `<b>${esc(p.name)}</b><br><span style="color:${c.color}">${c.label}</span>${p.area?" · "+esc(p.area):""}<br><a href="${navUrl(p,'google')}" target="_blank" rel="noopener">Find vej</a>`;
+}
+
+/* ---- MapLibre (engelske navne) ---- */
+function placeMarkersML(items){
+  markers.forEach(m=>m.remove()); markers=[];
+  const withCo=items.filter(p=>p.lat!=null);
+  const b=new maplibregl.LngLatBounds();
+  withCo.forEach(p=>{
+    const c=catOf(p.cat);
+    const el=document.createElement('div'); el.className='pin'; el.style.background=c.color;
+    const popup=new maplibregl.Popup({offset:14,closeButton:false}).setHTML(popupHTML(p,c));
+    markers.push(new maplibregl.Marker({element:el}).setLngLat([p.lng,p.lat]).setPopup(popup).addTo(map));
+    b.extend([p.lng,p.lat]);
+  });
+  $("mapNote").textContent=mapNoteText(items,withCo.length);
+  const ctr=CENTER[currentCity]||CENTER.seoul;
+  if(withCo.length>1) map.fitBounds(b,{padding:50,maxZoom:15,duration:0});
+  else if(withCo.length===1) map.flyTo({center:[withCo[0].lng,withCo[0].lat],zoom:14,duration:0});
+  else map.flyTo({center:[ctr[1],ctr[0]],zoom:11,duration:0});
+}
+
+/* ---- Leaflet (reservekort, altid pålideligt) ---- */
+function placeMarkersLF(items){
+  markers.forEach(m=>map.removeLayer(m)); markers=[];
+  const withCo=items.filter(p=>p.lat!=null), pts=[];
+  withCo.forEach(p=>{
+    const c=catOf(p.cat);
+    const icon=L.divIcon({className:'',iconSize:[16,16],iconAnchor:[8,8],
+      html:`<div class="pin" style="background:${c.color}"></div>`});
+    const mk=L.marker([p.lat,p.lng],{icon}).addTo(map).bindPopup(popupHTML(p,catOf(p.cat)));
+    markers.push(mk); pts.push([p.lat,p.lng]);
+  });
+  $("mapNote").textContent=mapNoteText(items,withCo.length);
+  const ctr=CENTER[currentCity]||CENTER.seoul;
+  setTimeout(()=>{ map.invalidateSize();
+    if(pts.length>1) map.fitBounds(pts,{padding:[40,40],maxZoom:16});
+    else if(pts.length===1) map.setView(pts[0],15);
+    else map.setView(ctr,12);
+  },60);
+}
+function buildLeaflet(items){
+  engine="lf"; mapReady=false; markers=[];
+  map=L.map('map',{zoomControl:true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  mapReady=true; placeMarkersLF(items);
+}
+
+function renderMap(items){
+  // already built
+  if(map){
+    if(engine==="ml"){ map.resize(); if(mapReady) placeMarkersML(items); }
+    else { map.invalidateSize(); placeMarkersLF(items); }
+    return;
+  }
+  // try MapLibre (English) first, with auto-fallback to Leaflet
+  if(typeof maplibregl!=="undefined"){
+    try{
+      const ctr=CENTER[currentCity]||CENTER.seoul;
+      engine="ml"; mapReady=false; markers=[];
+      map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/bright',
+        center:[ctr[1],ctr[0]],zoom:11});
+      try{ map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right'); }catch(e){}
+      let done=false;
+      const fallback=()=>{ if(done)return; done=true;
+        try{ map.remove(); }catch(e){} map=null; engine=null; mapReady=false;
+        if(typeof L!=="undefined") buildLeaflet(items);
+        else $("mapNote").textContent="Kortet kunne ikke indlæses — tjek din netforbindelse og prøv igen."; };
+      const timer=setTimeout(()=>{ if(!mapReady) fallback(); },6000);
+      map.on('load',()=>{ if(done)return; done=true; clearTimeout(timer); mapReady=true; latinizeLabels(); placeMarkersML(items); });
+      map.on('error',()=>{ if(!mapReady && !done){ clearTimeout(timer); fallback(); } });
+      return;
+    }catch(e){ try{ if(map) map.remove(); }catch(_){}; map=null; engine=null; }
+  }
+  // direct Leaflet fallback
+  if(typeof L!=="undefined") buildLeaflet(items);
+  else $("mapNote").textContent="Kortet kunne ikke indlæses — tjek din netforbindelse og prøv igen.";
+}
+
+
+function renderCitySeg(){
+  $("citySeg").innerHTML=CITIES.map(c=>`<button type="button" class="segbtn ${selCity===c.key?"sel":""}" data-city="${c.key}">${c.label}</button>`).join("");
+  $("citySeg").querySelectorAll(".segbtn").forEach(b=>b.onclick=()=>{selCity=b.dataset.city;renderCitySeg();renderDatalist();});
+}
+function renderCatGrid(){
+  $("catGrid").innerHTML=CATS.map(c=>`<button type="button" class="catopt ${selCat===c.key?"sel":""}" data-c="${c.key}">
+    <span class="ci" style="background:${c.color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[c.key]}</svg></span>${c.label}</button>`).join("");
+  $("catGrid").querySelectorAll(".catopt").forEach(b=>b.onclick=()=>{selCat=b.dataset.c;renderCatGrid();});
+}
+
+function openSheet(id){
+  editingId=id||null;
+  const p=id?places.find(x=>x.id===id):null;
+  $("sheetTitle").textContent=p?"Redigér sted":"Tilføj et sted";
+  selCity=p?cityOfP(p):currentCity; renderCitySeg();
+  selCat=p?p.cat:"food"; renderCatGrid(); renderDatalist();
+  $("fName").value=p?p.name:""; $("fArea").value=p?(p.area||""):"";
+  $("fAddr").value=p?(p.addr||""):""; $("fNote").value=p?(p.note||""):"";
+  $("fSrc").value=p?(p.src||""):"";
+  $("fLink").value=(p&&p.lat!=null)?`${p.lat}, ${p.lng}`:"";
+  $("overlay").classList.add("open"); $("sheet").classList.add("open");
+}
+function closeSheet(){$("overlay").classList.remove("open");$("sheet").classList.remove("open");}
+
+$("saveBtn").onclick=()=>{
+  const name=$("fName").value.trim();
+  if(!name){toast("Stedet skal have et navn");return;}
+  const co=parseCoords($("fLink").value);
+  const data={
+    id:editingId||(Date.now()+""+Math.random().toString(36).slice(2,6)),
+    name, cat:selCat, city:selCity,
+    area:$("fArea").value.trim(), addr:$("fAddr").value.trim(),
+    note:$("fNote").value.trim(), src:$("fSrc").value.trim(),
+    lat:co?co.lat:null, lng:co?co.lng:null,
+    ts:editingId?(places.find(x=>x.id===editingId)?.ts||Date.now()):Date.now()
+  };
+  if(editingId){places=places.map(x=>x.id===editingId?data:x);}
+  else{places.unshift(data);}
+  if(data.city!==currentCity){ currentCity=data.city; filterArea="all"; saveCity(); }
+  save();render();closeSheet();
+  toast(editingId?"Opdateret":`Tilføjet i ${cityOf(data.city).label}`);
+};
+
+$("fab").onclick=()=>openSheet();
+$("viewTog").querySelectorAll(".vbtn").forEach(b=>b.onclick=()=>{
+  view=b.dataset.v;
+  $("viewTog").querySelectorAll(".vbtn").forEach(x=>x.classList.toggle("sel",x.dataset.v===view));
+  render();
+});
+$("cancelBtn").onclick=closeSheet;
+$("overlay").onclick=closeSheet;
+$("q").oninput=e=>{query=e.target.value.toLowerCase().trim();render();};
+$("areaSel").onchange=e=>{filterArea=e.target.value;render();};
+
+$("nearBtn").onclick=()=>{
+  const btn=$("nearBtn");
+  if(userPos){userPos=null;btn.classList.remove("on");render();toast("Afstand slået fra");return;}
+  if(!navigator.geolocation){toast("Din enhed deler ikke placering");return;}
+  toast("Finder din placering…");
+  navigator.geolocation.getCurrentPosition(
+    pos=>{userPos={lat:pos.coords.latitude,lng:pos.coords.longitude};btn.classList.add("on");render();
+      const withCoords=cityPlaces().filter(p=>p.lat!=null).length;
+      toast(withCoords?"Sorteret efter afstand":"Tip: tilføj Maps-links for at se afstand");},
+    ()=>toast("Kunne ikke hente placering"),{enableHighAccuracy:true,timeout:8000});
+};
+
+$("menuBtn").onclick=e=>{e.stopPropagation();$("menuPop").classList.toggle("open");};
+document.addEventListener("click",()=>$("menuPop").classList.remove("open"));
+$("exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(places,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="korea-steder.json";a.click();toast("Fil gemt — del den gerne med rejsemakkeren");
+};
+$("importBtn").onclick=()=>$("fileInput").click();
+$("fileInput").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const arr=JSON.parse(r.result);if(!Array.isArray(arr))throw 0;
+    const ids=new Set(places.map(p=>p.id));let added=0;
+    arr.forEach(p=>{if(p&&p.name){if(!p.city)p.city="seoul"; if(!ids.has(p.id)){places.push(p);added++;}}});
+    save();render();toast(added?`${added} steder importeret`:"Ingen nye steder");
+  }catch(_){toast("Kunne ikke læse filen");}};
+  r.readAsText(f);e.target.value="";
+};
+
+let syncMode="copy";
+function openSync(mode){
+  syncMode=mode;
+  if(mode==="copy"){
+    $("syncTitle").textContent="Kopiér dine steder";
+    $("syncHint").textContent="Markér og kopiér teksten herunder (eller tryk på knappen). Send den til dig selv — fx i en besked eller mail — og brug så 'Indsæt steder' på den anden enhed.";
+    $("syncText").value=JSON.stringify(places);
+    $("syncAction").textContent="Kopiér til udklipsholder";
+  } else {
+    $("syncTitle").textContent="Indsæt steder";
+    $("syncHint").textContent="Indsæt hele teksten, du kopierede fra den anden enhed, og tryk Importér. Dine nuværende steder beholdes.";
+    $("syncText").value="";
+    $("syncAction").textContent="Importér";
+  }
+  $("overlay2").classList.add("open"); $("syncSheet").classList.add("open");
+}
+function closeSync(){ $("overlay2").classList.remove("open"); $("syncSheet").classList.remove("open"); }
+$("copyBtn").onclick=()=>openSync("copy");
+$("pasteBtn").onclick=()=>openSync("paste");
+$("syncClose").onclick=closeSync;
+$("overlay2").onclick=closeSync;
+$("syncAction").onclick=async ()=>{
+  if(syncMode==="copy"){
+    const t=$("syncText"); t.focus(); t.select();
+    let ok=false;
+    try{ await navigator.clipboard.writeText(t.value); ok=true; }catch(e){}
+    if(!ok){ try{ ok=document.execCommand("copy"); }catch(e){} }
+    toast(ok?"Kopieret — send teksten til dig selv":"Markér teksten og kopiér manuelt (hold fingeren nede)");
+  } else {
+    try{
+      const arr=JSON.parse($("syncText").value.trim());
+      if(!Array.isArray(arr)) throw 0;
+      const ids=new Set(places.map(p=>p.id)); let added=0;
+      arr.forEach(p=>{ if(p&&p.name){ if(!p.city)p.city="seoul"; if(!ids.has(p.id)){places.push(p);added++;} } });
+      save(); render(); closeSync(); toast(added?`${added} steder importeret`:"Ingen nye steder");
+    }catch(e){ toast("Kunne ikke læse teksten — sørg for at hele teksten er med"); }
+  }
+};
+
+load();
+</script>
+
+<script>
+// Register the service worker so the app installs to the home screen and loads instantly.
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
+</script>
+</body>
+</html>
