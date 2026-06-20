@@ -14,17 +14,59 @@
     "ts": 1750000000000
   },
   {
-    "id": "seoul-kimbuksun-garosugil",
-    "name": "Kim Buksun Keunnambi 김북순 큰남비집",
+    "id": "17818593080738nif",
+    "name": "Mongvely 몽블리",
+    "naver": "몽블리 명동",
+    "cat": "food",
+    "city": "seoul",
+    "area": "Myeongdong",
+    "addr": "3rd Floor, Myeongdong 8na-gil 9, Jung-gu, Seoul",
+    "note": "All you can eat korean bbq, tourist friendly and good price",
+    "src": "",
+    "lat": 37.5613160,
+    "lng": 126.9844309,
+    "ts": 1781859308073
+  },
+  {
+    "id": "1781859088293l1ad",
+    "name": "Uchujin Ramen 우츄진",
+    "naver": "우츄진 라멘",
+    "cat": "food",
+    "city": "seoul",
+    "area": "Euljiro",
+    "addr": "375, 3rd Floor, Daelim Shopping Center, Euljiro 157, Jung-gu, Seoul",
+    "note": "Ramen, kan forekomme kø ved frokost tid. Er i shopping center",
+    "src": "",
+    "lat": 37.5667721,
+    "lng": 126.9956097,
+    "ts": 1781859088293
+  },
+  {
+    "id": "1781858597352unow",
+    "name": "Guo",
+    "naver": "GUO 익선동",
+    "cat": "food",
+    "city": "seoul",
+    "area": "Ikseon-dong",
+    "addr": "1F, 23 Supyo-ro 28-gil, Jongno-gu, Seoul",
+    "note": "Dumplings",
+    "src": "",
+    "lat": 37.5728604,
+    "lng": 126.9890328,
+    "ts": 1781858597352
+  },
+  {
+    "id": "1781858418480ijq5",
+    "name": "Kim Buksun 김북순 큰남비집",
     "naver": "김북순 큰남비집",
     "cat": "food",
     "city": "seoul",
     "area": "Garosugil",
-    "addr": "15 Apgujeong-ro 2-gil, Gangnam-gu (Sinsa)",
-    "note": "Berømt kimchi jjigae ved Garosugil — nær Sinsa st. udgang 8.",
+    "addr": "15 Apgujeong-ro 2-gil, Gangnam-gu, Seoul",
+    "note": "Restauranten er kendt for netop kimchi jjigae (kimchi-gryde) med enten svinekam eller tun.",
     "src": "https://www.tripadvisor.com/Restaurant_Review-g294197-d9175752-Reviews-Kim_Buksun_Big_Nambi_House-Seoul.html",
     "lat": 37.5207187,
     "lng": 127.0199558,
-    "ts": 1750000100000
+    "ts": 1781858418480
   }
 ]
